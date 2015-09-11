@@ -1,0 +1,3 @@
+host = 'some-hostname'
+
+couchpotato_key = 'some-fancy-key'
