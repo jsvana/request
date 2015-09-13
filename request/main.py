@@ -3,6 +3,7 @@ import http.client
 import json
 from tabulate import tabulate
 import urllib.parse
+import ssl
 
 import config
 from media import Movie
@@ -54,7 +55,7 @@ class Api(object):
         self.app_base_route = ''
 
     def make_request(self, method, query=None):
-        connection = http.client.HTTPSConnection(self.host)
+        connection = http.client.HTTPSConnection(self.host, context=ssl._create_unverified_context())
         params = ''
         if query is not None:
             params = '?{}'.format(urllib.parse.urlencode(query))
