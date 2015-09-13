@@ -8,4 +8,7 @@ class MediaObject(object):
 class Movie(MediaObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.title = self.titles[0]
+        try:
+            self.title = self.titles[0]
+        except:
+            pass

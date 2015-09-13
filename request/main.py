@@ -46,6 +46,20 @@ def parse_args():
     )
     add_parser.set_defaults(function=add)
 
+    list_parser = subparsers.add_parser(
+        'list',
+        parents=[type_args],
+        help='list all media',
+    )
+    list_parser.set_defaults(function=list_media)
+
+    view_queued_parser = subparsers.add_parser(
+        'view-queued',
+        parents=[type_args],
+        help='view all queued media objects',
+    )
+    view_queued_parser.set_defaults(function=view_queued)
+
     return parser.parse_args()
 
 class Api(object):
@@ -84,10 +98,19 @@ class CouchpotatoApi(Api):
             'q': query,
         })
 
+    def get_all(self):
+        return self.make_request('movie.list')
+
     def add(self, imdb_id):
         """Add movie to CouchPotato wanted list by IMDB ID"""
         return self.make_request('movie.add', {
             'identifier': imdb_id,
+        })
+
+    def get_queued(self):
+        """Get all queued movies"""
+        return self.make_request('movie.list', {
+            'status': 'active',
         })
 
 def search(args):
@@ -98,6 +121,7 @@ def search(args):
         'title',
         'year',
         'imdb',
+        'status',
     ]
     rows = []
     for movie in movies:
@@ -114,12 +138,55 @@ def search(args):
 def add(args):
     api = CouchpotatoApi(config.couchpotato_key)
     data = api.add(args.id)
-    print(data)
+    #print(data)
+
+def _print_movies(movies, fields=None):
+    movies = [Movie(**m) for m in movies]
+    if fields is None:
+        fields = [
+            'title',
+            'year',
+            'imdb',
+            'status',
+        ]
+    rows = []
+    for movie in movies:
+        row = []
+        for field in fields:
+            val = None
+            try:
+                row.append(getattr(movie, field))
+            except:
+                row.append('-')
+        rows.append(row)
+    print(tabulate(rows, headers=fields))
+
+def list_media(args):
+    api = CouchpotatoApi(config.couchpotato_key)
+    data = api.get_all()
+    _print_movies(data['movies'])
+
+def view_queued(args):
+    api = CouchpotatoApi(config.couchpotato_key)
+    data = api.get_queued()
+    _print_movies(data['movies'], fields=[
+        'title',
+        'year',
+        'imdb',
+    ])
+
+def list_functions(args):
+    print('Enabled APIs:')
+    print('CouchPotato')
+    print()
+    print('See main.py --help for more information')
 
 def main():
     args = parse_args()
-    args.function(args)
-
+    try:
+        args.function(args)
+    except:
+        list_functions(args)
 
 if __name__ == '__main__':
     main()
