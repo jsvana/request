@@ -89,6 +89,16 @@ class CouchpotatoApi(Api):
             'identifier': imdb_id,
         })
 
+class SickbeardApi(Api):
+    def __init__(self, key):
+        super().__init__(key)
+        self.app_base_route = '/sickbeard/api'
+
+class HeadphonesApi(Api):
+    def __init__(self, key):
+        super().__init__(key)
+        self.app_base_route = '/headphones/api'
+
 def search(args):
     api = CouchpotatoApi(config.couchpotato_key)
     data = api.search(args.query)
