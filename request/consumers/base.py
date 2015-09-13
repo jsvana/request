@@ -38,7 +38,6 @@ class Consumer(object):
         """Print a set of objects and allow for some fancy mumbo-jumbo"""
         if cls is not None:
             objs = [cls(**o) for o in objs]
-        print(objs[0])
         rows = []
         for obj in objs:
             row = []
@@ -66,6 +65,11 @@ class Consumer(object):
                     except:
                         row.append('-')
             rows.append(row)
+
+        # Don't print anything if there is nothing to print
+        if not rows:
+            return
+
         if reverse:
             rows = reversed(rows)
         print(tabulate(rows, headers=fields))

@@ -8,10 +8,12 @@ import time
 
 from . import config
 from .consumers.couchpotato import CouchPotato
+from .consumers.sickbeard import Sickbeard
 from .media import Movie
 
 SUPPORTED_CONSUMERS = [
     CouchPotato,
+    Sickbeard,
 ]
 
 def parse_args():

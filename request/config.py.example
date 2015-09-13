@@ -1,3 +1,4 @@
 host = 'some-hostname'
 
 couchpotato_key = 'some-fancy-key'
+sickbeard_key = 'another-fancy-key'
