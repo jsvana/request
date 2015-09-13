@@ -1,13 +1,8 @@
-import http.client
-import json
-from tabulate import tabulate
-import urllib.parse
-import ssl
 import time
 
 from ..config import couchpotato_key
 from ..media import Movie
-from base import Consumer
+from .base import Consumer
 
 class CouchPotato(Consumer):
     def __init__(self):
@@ -20,8 +15,9 @@ class CouchPotato(Consumer):
             'couchpotato',
             help='various commands for couchpotato',
         )
-        potato_parsers = parser.add_subparsers()
-        search_parser = potato_parsers.add_parser(
+
+        potato_parser = parser.add_subparsers()
+        search_parser = potato_parser.add_parser(
             'search',
             help='search for a given movie',
         )
@@ -33,36 +29,42 @@ class CouchPotato(Consumer):
 
         add_parser = potato_parser.add_parser(
             'add',
-            help='add a given media object by id',
+            help='add a movie',
         )
-        add_parser.add_argument(
-            'id',
-            help='ID of media to add',
+        group = add_parser.add_mutually_exclusive_group()
+        group.add_argument(
+            '--id',
+            metavar='IMDB_ID',
+            help='IMDB ID of movie to add',
+        )
+        group.add_argument(
+            '--title',
+            metavar='MOVIE_TITLE',
+            help='title of movie to add. Must be a title returned by the '
+            '`search` command',
         )
         add_parser.set_defaults(cls=cls, function='add')
 
         list_parser = potato_parser.add_parser(
             'list',
-            parents=[type_args],
-            help='list all media',
+            help='list all movies',
         )
-        list_parser.set_defaults(cls=cls, function='list_media')
+        list_parser.set_defaults(cls=cls, function='get_all')
 
         view_queued_parser = potato_parser.add_parser(
-            'view-queued',
-            parents=[type_args],
-            help='view all queued media objects',
+            'queued',
+            help='view all queued movies',
         )
-        view_queued_parser.set_defaults(cls=cls, function='view_queued')
+        view_queued_parser.set_defaults(cls=cls, function='get_queued')
 
         notifications_parser = potato_parser.add_parser(
             'notifications',
-            parents=[type_args],
             help='view all notifications',
         )
         notifications_parser.set_defaults(cls=cls, function='notifications')
 
     def _print_movies(self, movies, fields=None):
+        """Helper wrapper around print_objects"""
         if fields is None:
             fields = [
                 'title',
@@ -70,6 +72,11 @@ class CouchPotato(Consumer):
                 'imdb',
             ]
         self.print_objects(movies, fields, cls=Movie)
+
+    def help(self, args):
+        """Help for base couchpotato command"""
+        print('Various commands for couchpotato')
+        print('run with --help for more information')
 
     def search(self, args):
         """Search for given movie title"""
@@ -81,13 +88,20 @@ class CouchPotato(Consumer):
     def get_all(self, args):
         """Get a list of all movies on the server"""
         data = self.make_request('movie.list')
-        self._print_movies(data['movies'])
+        self._print_movies(data['movies'], [
+            'title',
+            'status',
+            'type',
+        ])
 
     def add(self, args):
-        """Add movie to wanted list by IMDB ID"""
-        self.make_request('movie.add', {
-            'identifier': args.id,
-        })
+        """Add movie to wanted list by IMDB ID or title"""
+        query = {}
+        if args.id is not None:
+            query['identifier'] = args.id
+        elif args.title is not None:
+            query['title'] = args.title
+        self.make_request('movie.add', query)
         print('Sent add request to server')
 
     def get_queued(self, args):
@@ -97,8 +111,7 @@ class CouchPotato(Consumer):
         })
         self._print_movies(data['movies'], fields=[
             'title',
-            'year',
-            'imdb',
+            'type',
         ])
 
     def notifications(self, args):
@@ -107,4 +120,7 @@ class CouchPotato(Consumer):
         for notif in data['notifications']:
             if 'read' not in notif or not notif['read']:
                 unread.append(notif)
-        self.print_objects(unread, ['message', 'time'])
+        self.print_objects(unread, {
+            'message': None,
+            'time': lambda t: time.ctime(int(t)),
+        }, reverse=True)
