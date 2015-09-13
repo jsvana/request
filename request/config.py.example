@@ -1,3 +1,4 @@
-host = 'some-hostname'
-
+host = 'some.host.name'
 couchpotato_key = 'some-fancy-key'
+headphones_key = 'fancier-key'
+sickbeard_key = 'even-cooler-key'
