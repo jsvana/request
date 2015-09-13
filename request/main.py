@@ -4,6 +4,7 @@ import json
 from tabulate import tabulate
 import urllib.parse
 import ssl
+import time
 
 import config
 from media import Movie
@@ -60,6 +61,24 @@ def parse_args():
     )
     view_queued_parser.set_defaults(function=view_queued)
 
+    notifications_parser = subparsers.add_parser(
+        'notifications',
+        parents=[type_args],
+        help='view all notifications',
+    )
+    notifications_parser.set_defaults(function=notifications)
+
+    command_parser = subparsers.add_parser(
+        'command',
+        parents=[type_args],
+        help='run api command',
+    )
+    command_parser.add_argument(
+        'cmd',
+        help='command to run',
+    )
+    command_parser.set_defaults(function=command)
+
     return parser.parse_args()
 
 class Api(object):
@@ -112,6 +131,10 @@ class CouchpotatoApi(Api):
         return self.make_request('movie.list', {
             'status': 'active',
         })
+
+    def command(self, cmd):
+        """Run arbitrary command"""
+        return self.make_request(cmd)
 
 def search(args):
     api = CouchpotatoApi(config.couchpotato_key)
@@ -175,6 +198,29 @@ def view_queued(args):
         'imdb',
     ])
 
+def notifications(args):
+    api = CouchpotatoApi(config.couchpotato_key)
+    data = api.command('notification.list')
+    unread = []
+    for notif in data['notifications']:
+        if 'read' not in notif or not notif['read']:
+            unread.append(notif)
+    rows = []
+    for notif in unread:
+        rows.append([
+            notif['message'],
+            time.ctime(notif['time']),
+        ])
+    print(tabulate(reversed(rows), headers=[
+        'message',
+        'time'
+    ]))
+
+def command(args):
+    api = CouchpotatoApi(config.couchpotato_key)
+    data = api.command(args.cmd)
+    print(json.dumps(data, indent=4))
+
 def list_functions(args):
     print('Enabled APIs:')
     print('CouchPotato')
@@ -183,10 +229,10 @@ def list_functions(args):
 
 def main():
     args = parse_args()
-    try:
-        args.function(args)
-    except:
-        list_functions(args)
+    #try:
+    args.function(args)
+    #except:
+        #list_functions(args)
 
 if __name__ == '__main__':
     main()
