@@ -89,16 +89,16 @@ class Sickbeard(Consumer):
 
     def get_all(self, args):
         """Get a list of all movies on the server"""
-        data = self.make_request('shows')
+        data = self.make_request('?cmd=shows')
         self._print_shows(data)
 
     def logs(self, args):
         """Show most recent sickbeard logs"""
-        logs = self.make_request('logs')
+        logs = self.make_request('?cmd=logs&min_level=info')
         print('\n'.join(logs['data']))
 
     def notifications(self, args):
-        data = self.make_request('sb.getmessages')
+        data = self.make_request('?cmd=sb.getmessages')
         self.print_objects(data['data'], [
             'title',
             'message',

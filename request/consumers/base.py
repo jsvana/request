@@ -12,18 +12,15 @@ class Consumer(object):
         self.host = host
         self.app_base_route = ''
 
-    def make_request(self, method, query=None, body=None):
+    def make_request(self, query=None, body=None):
         try:
             connection = HTTPSConnection(self.host, context=ssl._create_unverified_context())
         except AttributeError:
             connection = HTTPSConnection(self.host)
-        params = ''
-        if query is not None:
-            params = '?{}'.format(urlencode(query))
-        path = '{}/{}/{}/{}'.format(
+        params = query
+        path = '{}/{}/{}'.format(
             self.app_base_route,
             self.key,
-            method,
             params,
         )
         connection.request('GET', path, body=body)
