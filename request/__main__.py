@@ -1,4 +1,4 @@
-import argparse
+import click
 import http.client
 import json
 from tabulate import tabulate
