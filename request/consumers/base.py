@@ -1,6 +1,6 @@
-from http.client import HTTPSConnection
+import requests
 import json
-import ssl
+import sys
 from tabulate import tabulate
 from urllib.parse import urlencode
 
@@ -13,26 +13,23 @@ class Consumer(object):
         self.app_base_route = ''
 
     def make_request(self, method, query=None, body=None):
-        try:
-            connection = HTTPSConnection(self.host, context=ssl._create_unverified_context())
-        except AttributeError:
-            connection = HTTPSConnection(self.host)
-        params = ''
+        payload = ''
         if query is not None:
-            params = '?{}'.format(urlencode(query))
-        path = '{}/{}/{}/{}'.format(
-            self.app_base_route,
-            self.key,
-            method,
-            params,
-        )
-        connection.request('GET', path, body=body)
-        response = connection.getresponse()
-        data = response.read()
+            payload = query
         try:
-            return json.loads(data.decode('utf-8'))
+            r = requests.get('https://{}/{}/{}/{}'.format(
+                self.host,
+                self.app_base_route,
+                self.key,
+                method,
+            ), params=payload)
         except:
-            return {}
+            sys.exc_info()[0]
+
+        try:
+            return r.json()
+        except:
+            sys.exc_info()[0]
 
     def print_objects(self, objs, fields, cls=None, reverse=False):
         """Print a set of objects and allow for some fancy mumbo-jumbo"""

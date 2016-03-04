@@ -1,9 +1,6 @@
 import argparse
-import http.client
 import json
 from tabulate import tabulate
-import urllib.parse
-import ssl
 import time
 
 from . import config
