@@ -18,7 +18,8 @@ class Consumer(object):
         except AttributeError:
             connection = HTTPSConnection(self.host)
         params = query
-        path = '{}/{}/{}'.format(
+        #path = '{}/{}/{}'.format(
+        path = '{}?apikey={}{}'.format(
             self.app_base_route,
             self.key,
             params,
